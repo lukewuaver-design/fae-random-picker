@@ -159,6 +159,8 @@
       margin-bottom: 20px;
     }
 
+    .draw-btn .big { font-size: 1.6em; margin-left: 4px; vertical-align: -0.08em; }
+
     .draw-btn:active {
       transform: scale(0.95);
       box-shadow: 0 2px 10px rgba(110, 231, 183, 0.4);
@@ -271,7 +273,7 @@
     </div>
 
     <div class="control-panel">
-      <button class="draw-btn" id="drawBtn">🎰 聲音追蹤大風吹</button>
+      <button class="draw-btn" id="drawBtn">🎰 聲音追蹤<span class="big">大風吹</span></button>
       <div class="result-text" id="resultText">等待抽籤...</div>
       <div class="mtbox-status" id="mtboxStatus"></div>
 
@@ -313,6 +315,7 @@
     const chars = Array.from({ length: totalChars }, (_, i) => document.getElementById('char-' + i));
     const cards = Array.from({ length: totalChars }, (_, i) => document.getElementById('card-' + i));
     const drawBtn = document.getElementById('drawBtn');
+    const DRAW_LABEL = drawBtn.innerHTML;   // 抽完後按鈕回到原本的名稱
     const resultText = document.getElementById('resultText');
     const muteBtn = document.getElementById('muteBtn');
 
@@ -534,7 +537,7 @@
           soundWin();
           resultText.textContent = '🎉 恭喜！今天是 ' + (winner + 1) + ' 號 FAE！';
           drawBtn.disabled = false;
-          drawBtn.textContent = '↻ 再抽一次';
+          drawBtn.innerHTML = DRAW_LABEL;
           isDrawing = false;
           if (mt.on.checked) mtSend(winner, mtWin);
         }
