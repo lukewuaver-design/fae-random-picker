@@ -31,7 +31,7 @@
       position: relative;
       width: 100%;
       height: 350px;
-      background-image: url('bg.jpg'); /* 學校背景圖 */
+      background-image: url('bg.png'); /* 使用去背後的 PNG 背景 */
       background-size: cover;
       background-position: center;
       border-radius: 12px;
@@ -43,13 +43,13 @@
     /* 人物共同設定 */
     .character {
       position: absolute;
-      bottom: -10px; /* 根據去背圖微調高度 */
-      height: 280px; /* 根據去背圖微調大小 */
+      bottom: -10px;
+      height: 280px; 
       transition: filter 0.3s ease, transform 0.3s ease;
       transform-origin: bottom center;
     }
 
-    /* 4個人物的位置 (需根據你的去背圖比例微調 left 數值) */
+    /* 4個人物的位置 */
     #char-0 { left: 5%; }
     #char-1 { left: 25%; }
     #char-2 { left: 50%; }
@@ -208,70 +208,4 @@
     const chars = Array.from({length: totalChars}, (_, i) => document.getElementById(`char-${i}`));
     const cards = Array.from({length: totalChars}, (_, i) => document.getElementById(`card-${i}`));
     const resultText = document.getElementById('resultText');
-    const drawBtn = document.getElementById('drawBtn');
-
-    // 重置所有狀態
-    function resetStyles() {
-      chars.forEach(char => char.className = 'character');
-      cards.forEach(card => card.className = 'card');
-    }
-
-    // 設定特定人物為高光，其餘變暗
-    function setHighlight(index) {
-      chars.forEach((char, i) => {
-        if (i === index) {
-          char.className = 'character highlight';
-          cards[i].className = 'card active';
-        } else {
-          char.className = 'character dimmed';
-          cards[i].className = 'card';
-        }
-      });
-    }
-
-    function startDraw() {
-      if (isDrawing) return;
-      isDrawing = true;
-      drawBtn.disabled = true;
-      drawBtn.innerText = "🔄 抽籤中...";
-      resultText.innerText = "命運轉盤啟動中...";
-      resultText.style.color = "#fff";
-
-      resetStyles();
-
-      // 輪轉動畫 (每 100 毫秒跳下一個)
-      drawInterval = setInterval(() => {
-        currentIndex = (currentIndex + 1) % totalChars;
-        setHighlight(currentIndex);
-      }, 100);
-
-      // 隨機決定動畫轉動多久 (2 ~ 3 秒之間)
-      const spinDuration = 2000 + Math.random() * 1000;
-      
-      setTimeout(() => {
-        stopDraw();
-      }, spinDuration);
-    }
-
-    function stopDraw() {
-      clearInterval(drawInterval);
-      
-      // 隨機決定最終中獎者
-      const winnerIndex = Math.floor(Math.random() * totalChars);
-      
-      // 先套用基本的高光與變暗
-      setHighlight(winnerIndex);
-
-      // 針對中獎者加上「跳躍」進階動畫
-      chars[winnerIndex].classList.add('win-animation');
-      
-      resultText.innerText = `🎉 恭喜！今天是 ${winnerIndex + 1} 號 FAE！`;
-      resultText.style.color = "#fef08a";
-      
-      isDrawing = false;
-      drawBtn.disabled = false;
-      drawBtn.innerText = "↺ 再抽一次";
-    }
-  </script>
-</body>
-</html>
+    const draw
