@@ -1,12 +1,277 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>FAE 隨機抽選器</title><link rel="stylesheet" href="/style.css"/></head>
-<body><main class="app">
-<header><p class="eyebrow">FAE TEAM · RANDOM PICKER</p><h1>今天由誰出任務？</h1><p class="sub">按下按鈕，讓幸運工程師出線！</p></header>
-<section class="stage"><img class="team" src="/team-pixel.png" alt="四位像素風 FAE 工程師"/>
-<div class="number-row" id="numbers"><div class="number active">1</div><div class="number">2</div><div class="number">3</div><div class="number">4</div></div>
-<div class="names"><span>FAE ①</span><span>FAE ②</span><span>FAE ③</span><span>FAE ④</span></div>
-</section>
-<button id="draw" class="draw">▶ 開始抽選</button><p id="result" aria-live="polite">準備好了嗎？</p>
-<footer>公平隨機 · 1–4 號</footer></main><script src="/script.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAE 隨機抽籤系統</title>
+  <style>
+    /* 全局與深色背景設定 */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0f172a; /* 深藍色背景 */
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: white;
+    }
+
+    .container {
+      width: 800px;
+      background-color: #1e293b;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 舞台區塊 (背景 + 人物) */
+    .stage {
+      position: relative;
+      width: 100%;
+      height: 350px;
+      background-image: url('bg.jpg'); /* 學校背景圖 */
+      background-size: cover;
+      background-position: center;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 4px solid #334155;
+      margin-bottom: 24px;
+    }
+
+    /* 人物共同設定 */
+    .character {
+      position: absolute;
+      bottom: -10px; /* 根據去背圖微調高度 */
+      height: 280px; /* 根據去背圖微調大小 */
+      transition: filter 0.3s ease, transform 0.3s ease;
+      transform-origin: bottom center;
+    }
+
+    /* 4個人物的位置 (需根據你的去背圖比例微調 left 數值) */
+    #char-0 { left: 5%; }
+    #char-1 { left: 25%; }
+    #char-2 { left: 50%; }
+    #char-3 { left: 70%; }
+
+    /* 特效 Class */
+    .dimmed {
+      filter: brightness(0.3) grayscale(60%);
+      transform: scale(0.95);
+    }
+
+    .highlight {
+      filter: brightness(1.1) drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+      transform: scale(1.05);
+      z-index: 10;
+    }
+
+    .win-animation {
+      animation: jumpAndWiggle 0.6s ease-in-out infinite;
+      filter: brightness(1.2) drop-shadow(0 0 20px rgba(255, 255, 0, 1));
+      z-index: 10;
+    }
+
+    @keyframes jumpAndWiggle {
+      0%, 100% { transform: translateY(0) scale(1.05) rotate(0deg); }
+      25% { transform: translateY(-20px) scale(1.05) rotate(-3deg); }
+      50% { transform: translateY(0) scale(1.05) rotate(0deg); }
+      75% { transform: translateY(-20px) scale(1.05) rotate(3deg); }
+    }
+
+    /* 下方燈號與卡片區 */
+    .cards-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      flex: 1;
+      background-color: #334155;
+      border-radius: 8px;
+      padding: 16px 0;
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 32px;
+      color: #94a3b8;
+    }
+
+    .card p {
+      margin: 8px 0 0 0;
+      font-size: 14px;
+      color: #64748b;
+    }
+
+    /* 卡片亮起狀態 */
+    .card.active {
+      background-color: #fef08a; /* 黃色亮起 */
+      border-color: #eab308;
+      box-shadow: 0 0 15px rgba(254, 240, 138, 0.5);
+    }
+
+    .card.active h2, .card.active p {
+      color: #854d0e; /* 深黃色字體 */
+      font-weight: bold;
+    }
+
+    /* 控制區 (按鈕與文字) */
+    .control-panel {
+      text-align: center;
+    }
+
+    .draw-btn {
+      background: linear-gradient(135deg, #a7f3d0, #6ee7b7);
+      color: #064e3b;
+      border: none;
+      padding: 16px 48px;
+      font-size: 20px;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(110, 231, 183, 0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+      margin-bottom: 20px;
+    }
+
+    .draw-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 10px rgba(110, 231, 183, 0.4);
+    }
+    
+    .draw-btn:disabled {
+      background: #475569;
+      color: #94a3b8;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .result-text {
+      font-size: 24px;
+      font-weight: bold;
+      color: #fef08a;
+      min-height: 36px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 舞台區 -->
+    <div class="stage">
+      <img src="fae1.png" id="char-0" class="character" alt="FAE 1">
+      <img src="fae2.png" id="char-1" class="character" alt="FAE 2">
+      <img src="fae3.png" id="char-2" class="character" alt="FAE 3">
+      <img src="fae4.png" id="char-3" class="character" alt="FAE 4">
+    </div>
+
+    <!-- 號碼卡片區 -->
+    <div class="cards-container">
+      <div class="card" id="card-0">
+        <h2>1</h2>
+        <p>FAE ①</p>
+      </div>
+      <div class="card" id="card-1">
+        <h2>2</h2>
+        <p>FAE ②</p>
+      </div>
+      <div class="card" id="card-2">
+        <h2>3</h2>
+        <p>FAE ③</p>
+      </div>
+      <div class="card" id="card-3">
+        <h2>4</h2>
+        <p>FAE ④</p>
+      </div>
+    </div>
+
+    <!-- 控制區 -->
+    <div class="control-panel">
+      <button class="draw-btn" id="drawBtn" onclick="startDraw()">🎰 開始抽籤</button>
+      <div class="result-text" id="resultText">等待抽籤...</div>
+    </div>
+  </div>
+
+  <script>
+    const totalChars = 4;
+    let drawInterval;
+    let isDrawing = false;
+    let currentIndex = 0;
+
+    const chars = Array.from({length: totalChars}, (_, i) => document.getElementById(`char-${i}`));
+    const cards = Array.from({length: totalChars}, (_, i) => document.getElementById(`card-${i}`));
+    const resultText = document.getElementById('resultText');
+    const drawBtn = document.getElementById('drawBtn');
+
+    // 重置所有狀態
+    function resetStyles() {
+      chars.forEach(char => char.className = 'character');
+      cards.forEach(card => card.className = 'card');
+    }
+
+    // 設定特定人物為高光，其餘變暗
+    function setHighlight(index) {
+      chars.forEach((char, i) => {
+        if (i === index) {
+          char.className = 'character highlight';
+          cards[i].className = 'card active';
+        } else {
+          char.className = 'character dimmed';
+          cards[i].className = 'card';
+        }
+      });
+    }
+
+    function startDraw() {
+      if (isDrawing) return;
+      isDrawing = true;
+      drawBtn.disabled = true;
+      drawBtn.innerText = "🔄 抽籤中...";
+      resultText.innerText = "命運轉盤啟動中...";
+      resultText.style.color = "#fff";
+
+      resetStyles();
+
+      // 輪轉動畫 (每 100 毫秒跳下一個)
+      drawInterval = setInterval(() => {
+        currentIndex = (currentIndex + 1) % totalChars;
+        setHighlight(currentIndex);
+      }, 100);
+
+      // 隨機決定動畫轉動多久 (2 ~ 3 秒之間)
+      const spinDuration = 2000 + Math.random() * 1000;
+      
+      setTimeout(() => {
+        stopDraw();
+      }, spinDuration);
+    }
+
+    function stopDraw() {
+      clearInterval(drawInterval);
+      
+      // 隨機決定最終中獎者
+      const winnerIndex = Math.floor(Math.random() * totalChars);
+      
+      // 先套用基本的高光與變暗
+      setHighlight(winnerIndex);
+
+      // 針對中獎者加上「跳躍」進階動畫
+      chars[winnerIndex].classList.add('win-animation');
+      
+      resultText.innerText = `🎉 恭喜！今天是 ${winnerIndex + 1} 號 FAE！`;
+      resultText.style.color = "#fef08a";
+      
+      isDrawing = false;
+      drawBtn.disabled = false;
+      drawBtn.innerText = "↺ 再抽一次";
+    }
+  </script>
+</body>
+</html>
