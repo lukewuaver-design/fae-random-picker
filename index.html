@@ -52,7 +52,14 @@
       border: 3px solid #0f172a;
       border-radius: 10px;
       image-rendering: pixelated;
-      transition: filter 0.3s ease, transform 0.3s ease;
+      transition: filter 0.3s ease, transform 0.3s ease, opacity 0.4s ease;
+    }
+
+    /* 尚未抽籤：大頭先隱藏，按下開始後依序彈出 */
+    .character:not(.show) {
+      opacity: 0;
+      transform: scale(0.6) translateY(24px);
+      pointer-events: none;
     }
 
     .dimmed {
@@ -191,6 +198,7 @@
   <script>
     const totalChars = 4;
     let isDrawing = false;
+    let revealed = false;
 
     const chars = Array.from({ length: totalChars }, (_, i) => document.getElementById('char-' + i));
     const cards = Array.from({ length: totalChars }, (_, i) => document.getElementById('card-' + i));
@@ -222,6 +230,14 @@
       resultText.textContent = '幸運正在降臨！';
       reset();
 
+      // 第一次抽籤：四個大頭依序彈出，之後再開始旋轉；再抽一次則不用重播
+      let delay = 0;
+      if (!revealed) {
+        revealed = true;
+        chars.forEach((c, i) => setTimeout(() => c.classList.add('show'), i * 150));
+        delay = totalChars * 150 + 350;
+      }
+
       const winner = Math.floor(Math.random() * totalChars); // 0~3
       const total = 20 + winner;   // 讓最後一格剛好停在 winner（20 為 4 的倍數）
       let tick = 0;
@@ -244,7 +260,7 @@
           isDrawing = false;
         }
       }
-      spin();
+      setTimeout(spin, delay);
     }
 
     drawBtn.addEventListener('click', startDraw);
