@@ -178,7 +178,71 @@
       min-height: 36px;
     }
 
+    .gear-btn {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.75);
+      color: white;
+      border: 1px solid #475569;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .gear-btn.on { border-color: #6ee7b7; color: #a7f3d0; }
+
+    .mtbox-status {
+      font-size: 14px;
+      min-height: 20px;
+      margin-top: 8px;
+      color: #94a3b8;
+    }
+    .mtbox-status.ok { color: #6ee7b7; }
+    .mtbox-status.err { color: #fca5a5; }
+
+    .mtbox-panel {
+      margin-top: 20px;
+      padding: 16px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      text-align: left;
+    }
+    .mtbox-panel[hidden] { display: none; }
+    .mtbox-panel h3 { margin: 0 0 4px; font-size: 16px; }
+    .mtbox-panel .hint { margin: 0 0 12px; font-size: 12px; color: #94a3b8; line-height: 1.6; }
+    .mtbox-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .mtbox-panel label { display: block; font-size: 12px; color: #94a3b8; }
+    .mtbox-panel input[type=text], .mtbox-panel input[type=password], .mtbox-panel input[type=number], .mtbox-panel select {
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 4px;
+      padding: 8px 10px;
+      font-size: 15px;
+      color: white;
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 8px;
+    }
+    .mtbox-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+    .mtbox-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+    .mtbox-row label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: white; }
+    .mtbox-row select { width: auto; margin-top: 0; }
+    .mtbox-row button {
+      padding: 8px 14px;
+      font-size: 14px;
+      color: white;
+      background: #334155;
+      border: 1px solid #475569;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .mtbox-row button:disabled { opacity: 0.5; cursor: not-allowed; }
+
     @media (max-width: 560px) {
+      .mtbox-grid { grid-template-columns: 1fr; }
       .container { padding: 16px; }
       .stage { height: 180px; }
       .card h2 { font-size: 24px; }
@@ -190,6 +254,7 @@
 <body>
 
   <div class="container">
+    <button class="gear-btn" id="gearBtn" title="MTBOX 連動設定">⚙ MTBOX</button>
     <button class="mute-btn" id="muteBtn" title="音效開關">🔊 音效</button>
     <div class="stage">
       <img src="fae1.png" id="char-0" class="character" alt="FAE 1">
@@ -208,6 +273,35 @@
     <div class="control-panel">
       <button class="draw-btn" id="drawBtn">🎰 開始抽籤</button>
       <div class="result-text" id="resultText">等待抽籤...</div>
+      <div class="mtbox-status" id="mtboxStatus"></div>
+
+      <div class="mtbox-panel" id="mtboxPanel" hidden>
+        <h3>MTBOX 連動</h3>
+        <p class="hint">抽到幾號，就對 MTBOX 送出切換設定檔的 CGI 指令（<code>request=setProfile&amp;profile=N</code>）。IP 與帳密只存在這台裝置的瀏覽器裡；用雲端代理時會隨指令經本站代理轉送給 MTBOX，代理不儲存。</p>
+        <div class="mtbox-grid">
+          <label>MTBOX IP<input type="text" id="mtHost" placeholder="例：192.168.1.168" autocomplete="off" spellcheck="false"></label>
+          <label>帳號<input type="text" id="mtUser" autocomplete="off" spellcheck="false"></label>
+          <label>密碼<input type="password" id="mtPass" autocomplete="off"></label>
+        </div>
+        <div class="mtbox-map">
+          <label>抽到 1 → 設定檔<input type="number" id="mtMap0" min="1" max="36" value="1"></label>
+          <label>抽到 2 → 設定檔<input type="number" id="mtMap1" min="1" max="36" value="2"></label>
+          <label>抽到 3 → 設定檔<input type="number" id="mtMap2" min="1" max="36" value="3"></label>
+          <label>抽到 4 → 設定檔<input type="number" id="mtMap3" min="1" max="36" value="4"></label>
+        </div>
+        <div class="mtbox-row">
+          <label><input type="checkbox" id="mtOn"> 抽籤後自動切換</label>
+          <label>連線方式
+            <select id="mtMode">
+              <option value="auto">自動判斷</option>
+              <option value="cloud">雲端代理（公網 IP）</option>
+              <option value="lan">區網直連（192.168.x.x 等）</option>
+            </select>
+          </label>
+          <button type="button" id="mtTest">測試（送出「抽到 1」的設定檔）</button>
+        </div>
+        <p class="hint" style="margin:12px 0 0">雲端代理：MTBOX 要有公網 IP，會回報成功或失敗。區網直連：這台裝置要跟 MTBOX 同網段，會跳出一個小視窗送指令後自動關閉，無法回報結果（要允許本站彈出視窗）。</p>
+      </div>
     </div>
   </div>
 
@@ -274,6 +368,117 @@
       muteBtn.textContent = muted ? '🔇 靜音' : '🔊 音效';
     });
 
+    // ===== MTBOX 連動：抽到 N 號就送出切換設定檔的 CGI 指令 =====
+    // 指令與 mt-camera-control 相同：http://<IP>/request=setProfile&profile=<N>（Basic 帳密）
+    const MT_KEY = 'faePickerMtbox';
+    const mt = {
+      host: document.getElementById('mtHost'),
+      user: document.getElementById('mtUser'),
+      pass: document.getElementById('mtPass'),
+      on: document.getElementById('mtOn'),
+      mode: document.getElementById('mtMode'),
+      map: [0, 1, 2, 3].map((i) => document.getElementById('mtMap' + i)),
+      test: document.getElementById('mtTest'),
+      panel: document.getElementById('mtboxPanel'),
+      status: document.getElementById('mtboxStatus'),
+      gear: document.getElementById('gearBtn'),
+    };
+
+    function mtLoad() {
+      try {
+        const d = JSON.parse(localStorage.getItem(MT_KEY) || '{}');
+        mt.host.value = d.host || '';
+        mt.user.value = d.user || '';
+        mt.pass.value = d.pass || '';
+        mt.on.checked = !!d.on;
+        mt.mode.value = d.mode || 'auto';
+        (d.map || []).forEach((v, i) => { if (mt.map[i] && v) mt.map[i].value = v; });
+      } catch (e) { /* 讀不到就用空白 */ }
+      mt.gear.classList.toggle('on', mt.on.checked);
+    }
+
+    function mtSave() {
+      try {
+        localStorage.setItem(MT_KEY, JSON.stringify({
+          host: mt.host.value.trim(), user: mt.user.value, pass: mt.pass.value,
+          on: mt.on.checked, mode: mt.mode.value, map: mt.map.map((el) => el.value),
+        }));
+      } catch (e) { /* 存不了就只在這次有效 */ }
+      mt.gear.classList.toggle('on', mt.on.checked);
+    }
+
+    function mtHostClean() {
+      return mt.host.value.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+    }
+
+    function mtIsLan(host) {
+      const m = host.replace(/:\d+$/, '').match(/^(\d+)\.(\d+)\.\d+\.\d+$/);
+      if (!m) return false;
+      const a = +m[1], b = +m[2];
+      return a === 10 || a === 127 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31) || (a === 169 && b === 254);
+    }
+
+    function mtUseLan() {
+      return mt.mode.value === 'lan' || (mt.mode.value === 'auto' && mtIsLan(mtHostClean()));
+    }
+
+    function mtProfileFor(n) {
+      const p = parseInt(mt.map[n].value, 10);
+      return p >= 1 && p <= 36 ? p : n + 1;
+    }
+
+    function mtSay(text, cls) {
+      mt.status.textContent = text;
+      mt.status.className = 'mtbox-status' + (cls ? ' ' + cls : '');
+    }
+
+    // 區網直連要靠彈出視窗（https 網頁不能直接連 http 設備），視窗必須在按下按鈕的當下先開好
+    function mtPrepare() {
+      if (!mtHostClean() || !mtUseLan()) return null;
+      try { return window.open('', 'mtbox', 'width=360,height=220'); } catch (e) { return null; }
+    }
+
+    async function mtSend(n, win) {
+      const host = mtHostClean();
+      const profile = mtProfileFor(n);
+      if (!host) { if (win) win.close(); mtSay('MTBOX：還沒填 IP', 'err'); return; }
+
+      if (mtUseLan()) {
+        if (!win) { mtSay('MTBOX：彈出視窗被擋住了，請允許本站彈出視窗', 'err'); return; }
+        const auth = mt.user.value ? encodeURIComponent(mt.user.value) + ':' + encodeURIComponent(mt.pass.value) + '@' : '';
+        try {
+          win.location.href = 'http://' + auth + host + '/request=setProfile&profile=' + profile;
+          setTimeout(() => { try { win.close(); } catch (e) {} }, 2500);
+          mtSay('MTBOX：已送出切換設定檔 ' + profile + '（區網直連，無法確認結果）', 'ok');
+        } catch (e) { mtSay('MTBOX：送出失敗', 'err'); }
+        return;
+      }
+
+      mtSay('MTBOX：切換設定檔 ' + profile + ' 中…');
+      try {
+        const r = await fetch('/api/mtbox', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ host, user: mt.user.value, pass: mt.pass.value, profile }),
+        });
+        const d = await r.json();
+        if (d.ok) mtSay('MTBOX：已切換到設定檔 ' + profile, 'ok');
+        else mtSay('MTBOX：切換失敗（' + (d.error || 'HTTP ' + r.status) + '）', 'err');
+      } catch (e) {
+        mtSay('MTBOX：切換失敗（代理沒有回應）', 'err');
+      }
+    }
+
+    mt.gear.addEventListener('click', () => { mt.panel.hidden = !mt.panel.hidden; });
+    [mt.host, mt.user, mt.pass, mt.on, mt.mode, ...mt.map].forEach((el) => el.addEventListener('change', mtSave));
+    mt.test.addEventListener('click', async () => {
+      mtSave();
+      mt.test.disabled = true;
+      await mtSend(0, mtPrepare());
+      mt.test.disabled = false;
+    });
+    mtLoad();
+
     // 亮起第 n 位（0~3）：卡片亮黃燈、人物發光，其餘變暗
     function light(n) {
       for (let i = 0; i < totalChars; i++) {
@@ -298,6 +503,8 @@
       drawBtn.textContent = '抽選中…';
       resultText.textContent = '幸運正在降臨！';
       reset();
+      mtSay('');
+      const mtWin = mt.on.checked ? mtPrepare() : null;
 
       // 第一次抽籤：四個大頭依序彈出，之後再開始旋轉；再抽一次則不用重播
       let delay = 0;
@@ -329,6 +536,7 @@
           drawBtn.disabled = false;
           drawBtn.textContent = '↻ 再抽一次';
           isDrawing = false;
+          if (mt.on.checked) mtSend(winner, mtWin);
         }
       }
       setTimeout(spin, delay);
