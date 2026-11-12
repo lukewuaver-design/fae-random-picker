@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FAE 隨機抽籤系統</title>
   <style>
-    /* 全局與深色背景設定 */
     body {
       margin: 0;
-      padding: 0;
-      background-color: #0f172a; /* 深藍色背景 */
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      padding: 16px;
+      box-sizing: border-box;
+      background-color: #0f172a;
+      font-family: "Segoe UI", "Microsoft JhengHei", Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -19,43 +19,42 @@
     }
 
     .container {
-      width: 800px;
+      width: 100%;
+      max-width: 800px;
+      box-sizing: border-box;
       background-color: #1e293b;
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
-    /* 舞台區塊 (背景 + 人物) */
+    /* 舞台：背景圖 + 四張人物頭像（flex 平均排列） */
     .stage {
-      position: relative;
       width: 100%;
-      height: 350px;
-      background-image: url('bg.png'); /* 使用去背後的 PNG 背景 */
+      height: 260px;
+      box-sizing: border-box;
+      background-image: url('bg.png');
       background-size: cover;
       background-position: center;
       border-radius: 12px;
-      overflow: hidden;
       border: 4px solid #334155;
       margin-bottom: 24px;
+      display: flex;
+      justify-content: space-evenly;
+      align-items: center;
+      overflow: hidden;
     }
 
-    /* 人物共同設定 */
     .character {
-      position: absolute;
-      bottom: -10px;
-      height: 280px; 
+      width: 21%;
+      aspect-ratio: 210 / 232;
+      object-fit: cover;
+      border: 3px solid #0f172a;
+      border-radius: 10px;
+      image-rendering: pixelated;
       transition: filter 0.3s ease, transform 0.3s ease;
-      transform-origin: bottom center;
     }
 
-    /* 4個人物的位置 */
-    #char-0 { left: 5%; }
-    #char-1 { left: 25%; }
-    #char-2 { left: 50%; }
-    #char-3 { left: 70%; }
-
-    /* 特效 Class */
     .dimmed {
       filter: brightness(0.3) grayscale(60%);
       transform: scale(0.95);
@@ -75,12 +74,11 @@
 
     @keyframes jumpAndWiggle {
       0%, 100% { transform: translateY(0) scale(1.05) rotate(0deg); }
-      25% { transform: translateY(-20px) scale(1.05) rotate(-3deg); }
+      25% { transform: translateY(-12px) scale(1.05) rotate(-3deg); }
       50% { transform: translateY(0) scale(1.05) rotate(0deg); }
-      75% { transform: translateY(-20px) scale(1.05) rotate(3deg); }
+      75% { transform: translateY(-12px) scale(1.05) rotate(3deg); }
     }
 
-    /* 下方燈號與卡片區 */
     .cards-container {
       display: flex;
       justify-content: space-between;
@@ -110,19 +108,17 @@
       color: #64748b;
     }
 
-    /* 卡片亮起狀態 */
     .card.active {
-      background-color: #fef08a; /* 黃色亮起 */
+      background-color: #fef08a;
       border-color: #eab308;
       box-shadow: 0 0 15px rgba(254, 240, 138, 0.5);
     }
 
     .card.active h2, .card.active p {
-      color: #854d0e; /* 深黃色字體 */
+      color: #854d0e;
       font-weight: bold;
     }
 
-    /* 控制區 (按鈕與文字) */
     .control-panel {
       text-align: center;
     }
@@ -145,7 +141,7 @@
       transform: scale(0.95);
       box-shadow: 0 2px 10px rgba(110, 231, 183, 0.4);
     }
-    
+
     .draw-btn:disabled {
       background: #475569;
       color: #94a3b8;
@@ -159,12 +155,19 @@
       color: #fef08a;
       min-height: 36px;
     }
+
+    @media (max-width: 560px) {
+      .container { padding: 16px; }
+      .stage { height: 180px; }
+      .card h2 { font-size: 24px; }
+      .card p { font-size: 12px; }
+      .result-text { font-size: 20px; }
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <!-- 舞台區 -->
     <div class="stage">
       <img src="fae1.png" id="char-0" class="character" alt="FAE 1">
       <img src="fae2.png" id="char-1" class="character" alt="FAE 2">
@@ -172,40 +175,79 @@
       <img src="fae4.png" id="char-3" class="character" alt="FAE 4">
     </div>
 
-    <!-- 號碼卡片區 -->
     <div class="cards-container">
-      <div class="card" id="card-0">
-        <h2>1</h2>
-        <p>FAE ①</p>
-      </div>
-      <div class="card" id="card-1">
-        <h2>2</h2>
-        <p>FAE ②</p>
-      </div>
-      <div class="card" id="card-2">
-        <h2>3</h2>
-        <p>FAE ③</p>
-      </div>
-      <div class="card" id="card-3">
-        <h2>4</h2>
-        <p>FAE ④</p>
-      </div>
+      <div class="card" id="card-0"><h2>1</h2><p>FAE ①</p></div>
+      <div class="card" id="card-1"><h2>2</h2><p>FAE ②</p></div>
+      <div class="card" id="card-2"><h2>3</h2><p>FAE ③</p></div>
+      <div class="card" id="card-3"><h2>4</h2><p>FAE ④</p></div>
     </div>
 
-    <!-- 控制區 -->
     <div class="control-panel">
-      <button class="draw-btn" id="drawBtn" onclick="startDraw()">🎰 開始抽籤</button>
+      <button class="draw-btn" id="drawBtn">🎰 開始抽籤</button>
       <div class="result-text" id="resultText">等待抽籤...</div>
     </div>
   </div>
 
   <script>
     const totalChars = 4;
-    let drawInterval;
     let isDrawing = false;
-    let currentIndex = 0;
 
-    const chars = Array.from({length: totalChars}, (_, i) => document.getElementById(`char-${i}`));
-    const cards = Array.from({length: totalChars}, (_, i) => document.getElementById(`card-${i}`));
+    const chars = Array.from({ length: totalChars }, (_, i) => document.getElementById('char-' + i));
+    const cards = Array.from({ length: totalChars }, (_, i) => document.getElementById('card-' + i));
+    const drawBtn = document.getElementById('drawBtn');
     const resultText = document.getElementById('resultText');
-    const draw
+
+    // 亮起第 n 位（0~3）：卡片亮黃燈、人物發光，其餘變暗
+    function light(n) {
+      for (let i = 0; i < totalChars; i++) {
+        cards[i].classList.toggle('active', i === n);
+        chars[i].classList.remove('win-animation');
+        chars[i].classList.toggle('highlight', i === n);
+        chars[i].classList.toggle('dimmed', i !== n);
+      }
+    }
+
+    function reset() {
+      for (let i = 0; i < totalChars; i++) {
+        cards[i].classList.remove('active');
+        chars[i].classList.remove('highlight', 'dimmed', 'win-animation');
+      }
+    }
+
+    function startDraw() {
+      if (isDrawing) return;
+      isDrawing = true;
+      drawBtn.disabled = true;
+      drawBtn.textContent = '抽選中…';
+      resultText.textContent = '幸運正在降臨！';
+      reset();
+
+      const winner = Math.floor(Math.random() * totalChars); // 0~3
+      const total = 20 + winner;   // 讓最後一格剛好停在 winner（20 為 4 的倍數）
+      let tick = 0;
+      let step = 70;
+
+      function spin() {
+        tick++;
+        light(tick % totalChars);
+
+        if (tick < total) {
+          step += tick > total - 8 ? 18 : 3;   // 越接近終點越慢
+          setTimeout(spin, step);
+        } else {
+          light(winner);
+          chars[winner].classList.remove('highlight');
+          chars[winner].classList.add('win-animation');
+          resultText.textContent = '🎉 恭喜！今天是 ' + (winner + 1) + ' 號 FAE！';
+          drawBtn.disabled = false;
+          drawBtn.textContent = '↻ 再抽一次';
+          isDrawing = false;
+        }
+      }
+      spin();
+    }
+
+    drawBtn.addEventListener('click', startDraw);
+  </script>
+</body>
+</html>
