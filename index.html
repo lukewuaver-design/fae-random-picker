@@ -26,6 +26,21 @@
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .mute-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      z-index: 20;
+      background: rgba(15, 23, 42, 0.75);
+      color: white;
+      border: 1px solid #475569;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 14px;
+      cursor: pointer;
     }
 
     /* 舞台：背景圖 + 四張人物頭像（flex 平均排列） */
@@ -175,6 +190,7 @@
 <body>
 
   <div class="container">
+    <button class="mute-btn" id="muteBtn" title="音效開關">🔊 音效</button>
     <div class="stage">
       <img src="fae1.png" id="char-0" class="character" alt="FAE 1">
       <img src="fae2.png" id="char-1" class="character" alt="FAE 2">
@@ -204,6 +220,59 @@
     const cards = Array.from({ length: totalChars }, (_, i) => document.getElementById('card-' + i));
     const drawBtn = document.getElementById('drawBtn');
     const resultText = document.getElementById('resultText');
+    const muteBtn = document.getElementById('muteBtn');
+
+    // ===== 音效（Web Audio 合成，不需要音檔；任何錯誤都不會影響抽籤） =====
+    let audioCtx = null;
+    let muted = false;
+
+    function getCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function tone(freq, when, dur, type, vol) {
+      try {
+        if (muted) return;
+        const c = getCtx();
+        const t = c.currentTime + when;
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.type = type || 'square';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol || 0.08, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start(t);
+        o.stop(t + dur + 0.02);
+      } catch (e) { /* 音效失敗就算了 */ }
+    }
+
+    const PENTA = [0, 2, 4, 7, 9];                       // 五聲音階
+    const note = (semi) => 523.25 * Math.pow(2, semi / 12); // 以 C5 為基準
+
+    // 大頭彈出：上行小音
+    function soundPop(i) { tone(note(PENTA[i] + 12), 0, 0.12, 'triangle', 0.1); }
+
+    // 旋轉每一格：音階循環上行，隨著減速自然變慢
+    function soundTick(tick) {
+      const semi = PENTA[tick % PENTA.length] + (Math.floor(tick / PENTA.length) % 2) * 12;
+      tone(note(semi), 0, 0.09, 'square', 0.06);
+    }
+
+    // 中獎：小號風格上行琶音 + 和弦
+    function soundWin() {
+      [0, 4, 7, 12, 16, 19].forEach((s, k) => tone(note(s), k * 0.09, 0.22, 'sawtooth', 0.07));
+      [0, 4, 7, 12].forEach((s) => tone(note(s), 0.6, 0.9, 'triangle', 0.09));
+    }
+
+    muteBtn.addEventListener('click', () => {
+      muted = !muted;
+      muteBtn.textContent = muted ? '🔇 靜音' : '🔊 音效';
+    });
 
     // 亮起第 n 位（0~3）：卡片亮黃燈、人物發光，其餘變暗
     function light(n) {
@@ -234,7 +303,7 @@
       let delay = 0;
       if (!revealed) {
         revealed = true;
-        chars.forEach((c, i) => setTimeout(() => c.classList.add('show'), i * 150));
+        chars.forEach((c, i) => setTimeout(() => { c.classList.add('show'); soundPop(i); }, i * 150));
         delay = totalChars * 150 + 350;
       }
 
@@ -246,6 +315,7 @@
       function spin() {
         tick++;
         light(tick % totalChars);
+        soundTick(tick);
 
         if (tick < total) {
           step += tick > total - 8 ? 18 : 3;   // 越接近終點越慢
@@ -254,6 +324,7 @@
           light(winner);
           chars[winner].classList.remove('highlight');
           chars[winner].classList.add('win-animation');
+          soundWin();
           resultText.textContent = '🎉 恭喜！今天是 ' + (winner + 1) + ' 號 FAE！';
           drawBtn.disabled = false;
           drawBtn.textContent = '↻ 再抽一次';
