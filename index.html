@@ -422,6 +422,7 @@
     }
 
     function mtUseLan() {
+      if (location.protocol === 'file:') return true;   // 單機版（直接開檔案）沒有雲端代理，一律直連
       return mt.mode.value === 'lan' || (mt.mode.value === 'auto' && mtIsLan(mtHostClean()));
     }
 

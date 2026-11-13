@@ -22,3 +22,8 @@ https://fae-random-picker-web.vercel.app/ （Vercel 專案 `fae-random-picker-we
 - `index.html`：整個頁面（樣式與程式都在裡面）
 - `api/mtbox.js`：MTBOX 雲端代理
 - `script.js`、`style.css`、`public/`：舊檔，頁面沒有使用
+
+## 單機版
+
+`python3 build-offline.py` 會把圖片嵌進去，產生單一檔案 `聲音追蹤大風吹-單機版.html`（不進版控），複製到任何電腦點兩下就能開，不需要網路。
+單機版沒有雲端代理，MTBOX 指令一律用彈出視窗直連（電腦要連得到 MTBOX、瀏覽器要允許彈出視窗）。改了 `index.html` 之後要重新產生。
